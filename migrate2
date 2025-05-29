@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# Исходная директория
+source_dir="/tmp/coupled"
+# Целевая директория для архивации
+target_dir="/coupled/archive"
+
+# Получаем текущую временную метку в секундах
+current_timestamp=$(date +%s)
+
+# Вычисляем временную метку для файлов старше 60 дней
+cutoff_timestamp=$((current_timestamp - 60 * 24 * 3600))
+
+# Поиск и перемещение файлов
+find "$source_dir" -type f -print0 | while IFS= read -r -d '' file; do
+    # Получаем временную метку создания файла (birth time)
+    creation_timestamp=$(stat -c '%W' "$file")
+    
+    # Если birth time недоступен (0), используем время последнего изменения
+    if [ "$creation_timestamp" -eq 0 ]; then
+        creation_timestamp=$(stat -c '%Y' "$file")
+    fi
+    
+    # Проверяем возраст файла
+    if [ "$creation_timestamp" -lt "$cutoff_timestamp" ]; then
+        # Определяем относительный путь
+        rel_path="${file#$source_dir/}"
+        
+        # Создание целевой директории с сохранением структуры
+        target_path="$target_dir/$rel_path"
+        mkdir -p "$(dirname "$target_path")"
+        
+        # Перемещение файла
+        mv -v "$file" "$target_path"
+    fi
+done
