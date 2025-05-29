@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# Исходная директория
+source_dir="/tmp/coupled"
+# Целевая директория для архивации
+target_dir="/coupled/archive"
+
+# Поиск и перемещение файлов старше 60 дней
+find "$source_dir" -type f -mtime +60 -print0 | while IFS= read -r -d '' file; do
+    # Определение относительного пути
+    rel_path="${file#$source_dir/}"
+    
+    # Создание целевой директории с сохранением структуры
+    target_path="$target_dir/$rel_path"
+    mkdir -p "$(dirname "$target_path")"
+    
+    # Перемещение файла
+    mv -v "$file" "$target_path"
+done
